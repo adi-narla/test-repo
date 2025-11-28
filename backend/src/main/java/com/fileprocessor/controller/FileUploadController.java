@@ -2,7 +2,7 @@ package com.fileprocessor.controller;
 
 import com.fileprocessor.dto.FileUploadResponse;
 import com.fileprocessor.exception.InvalidFileException;
-import com.fileprocessor.service.FileProcessingService;
+import com.fileprocessor.service.IFileProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -27,7 +27,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FileUploadController {
 
-    private final FileProcessingService fileProcessingService;
+    private final IFileProcessingService fileProcessingService;
 
     /**
      * Handles file upload and processing.
