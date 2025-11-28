@@ -1,6 +1,10 @@
 import { Component } from '@angular/core';
 import { FileUploadComponent } from './components/file-upload/file-upload.component';
 
+/**
+ * Root application component.
+ * Provides the main application layout and file upload functionality.
+ */
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -14,5 +18,5 @@ import { FileUploadComponent } from './components/file-upload/file-upload.compon
   styles: []
 })
 export class AppComponent {
-  title = 'File Processor';
+  readonly title = 'File Processor';
 }
