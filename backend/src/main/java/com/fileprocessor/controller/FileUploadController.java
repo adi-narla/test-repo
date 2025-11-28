@@ -1,6 +1,7 @@
 package com.fileprocessor.controller;
 
 import com.fileprocessor.dto.FileUploadResponse;
+import com.fileprocessor.exception.InvalidFileException;
 import com.fileprocessor.service.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -12,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,40 +31,31 @@ public class FileUploadController {
 
     /**
      * Handles file upload and processing.
+     * Exceptions are handled by GlobalExceptionHandler.
      *
      * @param file the multipart file to be uploaded and processed
-     * @return ResponseEntity containing upload details or error information
+     * @return ResponseEntity containing upload details
      */
     @PostMapping("/upload")
     public ResponseEntity<FileUploadResponse> uploadFile(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(FileUploadResponse.builder()
-                            .message("Please select a file to upload")
-                            .build());
+            throw new com.fileprocessor.exception.InvalidFileException("Please select a file to upload");
         }
 
-        try {
-            long startTime = System.currentTimeMillis();
-            String outputFileName = fileProcessingService.processFile(file);
-            long processingTime = System.currentTimeMillis() - startTime;
+        long startTime = System.currentTimeMillis();
+        String outputFileName = fileProcessingService.processFile(file);
+        long processingTime = System.currentTimeMillis() - startTime;
 
-            FileUploadResponse response = FileUploadResponse.builder()
-                    .message("File processed successfully")
-                    .originalFileName(file.getOriginalFilename())
-                    .outputFileName(outputFileName)
-                    .downloadUrl("/api/files/download/" + outputFileName)
-                    .fileSize(file.getSize())
-                    .processingTime(processingTime + "ms")
-                    .build();
+        FileUploadResponse response = FileUploadResponse.builder()
+                .message("File processed successfully")
+                .originalFileName(file.getOriginalFilename())
+                .outputFileName(outputFileName)
+                .downloadUrl("/api/files/download/" + outputFileName)
+                .fileSize(file.getSize())
+                .processingTime(processingTime + "ms")
+                .build();
 
-            return ResponseEntity.ok(response);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(FileUploadResponse.builder()
-                            .message("Failed to process file: " + e.getMessage())
-                            .build());
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
