@@ -1,0 +1,63 @@
+<div class="upload-container">
+  <div class="upload-card">
+    <h2>Upload File for Processing</h2>
+
+    <div class="upload-section">
+      <div class="file-input-wrapper">
+        <input
+          type="file"
+          id="fileInput"
+          (change)="onFileSelected($event)"
+          accept="image/*"
+          [disabled]="isUploading">
+        <label for="fileInput" class="file-input-label">
+          <span class="upload-icon">📁</span>
+          <span>{{ selectedFile ? selectedFile.name : 'Choose an image file' }}</span>
+        </label>
+      </div>
+
+      <button
+        class="upload-button"
+        (click)="onUpload()"
+        [disabled]="!selectedFile || isUploading">
+        {{ isUploading ? 'Processing...' : 'Upload and Process' }}
+      </button>
+
+      <button
+        class="reset-button"
+        (click)="reset()"
+        [disabled]="isUploading">
+        Reset
+      </button>
+    </div>
+
+    <div class="status-section" *ngIf="uploadStatus || errorMessage">
+      <p class="status-message success" *ngIf="uploadStatus">{{ uploadStatus }}</p>
+      <p class="status-message error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    </div>
+
+    <div class="preview-section" *ngIf="previewUrl">
+      <h3>Original Image Preview</h3>
+      <img [src]="previewUrl" alt="Preview" class="preview-image">
+    </div>
+
+    <div class="result-section" *ngIf="uploadResponse">
+      <h3>Processed Result</h3>
+      <div class="result-info">
+        <p><strong>Original File:</strong> {{ uploadResponse.originalFileName }}</p>
+        <p><strong>Output File:</strong> {{ uploadResponse.outputFileName }}</p>
+      </div>
+
+      <div class="processed-image-container">
+        <img [src]="getDownloadUrl()" alt="Processed image" class="processed-image">
+      </div>
+
+      <a
+        [href]="getDownloadUrl()"
+        download
+        class="download-button">
+        Download Processed Image
+      </a>
+    </div>
+  </div>
+</div>
