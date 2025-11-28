@@ -1,7 +1,8 @@
 package com.fileprocessor.controller;
 
+import com.fileprocessor.dto.FileUploadResponse;
 import com.fileprocessor.service.FileProcessingService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -16,38 +17,62 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * REST controller for handling file upload and download operations.
+ * Uses constructor injection for better testability and immutability.
+ */
 @RestController
 @RequestMapping("/api/files")
 @CrossOrigin(origins = "http://localhost:4200")
+@RequiredArgsConstructor
 public class FileUploadController {
 
-    @Autowired
-    private FileProcessingService fileProcessingService;
+    private final FileProcessingService fileProcessingService;
 
+    /**
+     * Handles file upload and processing.
+     *
+     * @param file the multipart file to be uploaded and processed
+     * @return ResponseEntity containing upload details or error information
+     */
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
-        Map<String, String> response = new HashMap<>();
+    public ResponseEntity<FileUploadResponse> uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(FileUploadResponse.builder()
+                            .message("Please select a file to upload")
+                            .build());
+        }
 
         try {
-            if (file.isEmpty()) {
-                response.put("error", "Please select a file to upload");
-                return ResponseEntity.badRequest().body(response);
-            }
-
+            long startTime = System.currentTimeMillis();
             String outputFileName = fileProcessingService.processFile(file);
+            long processingTime = System.currentTimeMillis() - startTime;
 
-            response.put("message", "File processed successfully");
-            response.put("originalFileName", file.getOriginalFilename());
-            response.put("outputFileName", outputFileName);
-            response.put("downloadUrl", "/api/files/download/" + outputFileName);
+            FileUploadResponse response = FileUploadResponse.builder()
+                    .message("File processed successfully")
+                    .originalFileName(file.getOriginalFilename())
+                    .outputFileName(outputFileName)
+                    .downloadUrl("/api/files/download/" + outputFileName)
+                    .fileSize(file.getSize())
+                    .processingTime(processingTime + "ms")
+                    .build();
 
             return ResponseEntity.ok(response);
         } catch (IOException e) {
-            response.put("error", "Failed to process file: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(FileUploadResponse.builder()
+                            .message("Failed to process file: " + e.getMessage())
+                            .build());
         }
     }
 
+    /**
+     * Downloads a processed file by filename.
+     *
+     * @param filename the name of the file to download
+     * @return ResponseEntity containing the file resource or error status
+     */
     @GetMapping("/download/{filename:.+}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
         try {
@@ -68,6 +93,11 @@ public class FileUploadController {
         }
     }
 
+    /**
+     * Health check endpoint to verify service availability.
+     *
+     * @return ResponseEntity with service status
+     */
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
         Map<String, String> response = new HashMap<>();
