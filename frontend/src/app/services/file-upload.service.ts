@@ -48,13 +48,15 @@ export class FileUploadService {
    * Automatically retries failed requests up to MAX_RETRIES times.
    *
    * @param file The file to upload
+   * @param processorType Optional processor type (default: GRAYSCALE_BORDER)
    * @returns Observable of UploadResponse
    */
-  uploadFile(file: File): Observable<UploadResponse> {
+  uploadFile(file: File, processorType: string = 'GRAYSCALE_BORDER'): Observable<UploadResponse> {
     this.validateFile(file);
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('processorType', processorType);
 
     return this.http.post<UploadResponse>(`${this.apiUrl}/upload`, formData).pipe(
       retry(this.MAX_RETRIES),

@@ -1,5 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { FileUploadService, UploadResponse } from '../../services/file-upload.service';
 
@@ -7,11 +8,12 @@ import { FileUploadService, UploadResponse } from '../../services/file-upload.se
  * Component for handling file upload and processing.
  * Provides UI for selecting files, uploading, and viewing processed results.
  * Implements OnDestroy for proper subscription cleanup.
+ * Includes file type validation and processor selection.
  */
 @Component({
   selector: 'app-file-upload',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './file-upload.component.html',
   styleUrls: ['./file-upload.component.css']
 })
@@ -22,6 +24,16 @@ export class FileUploadComponent implements OnDestroy {
   uploadResponse: UploadResponse | null = null;
   previewUrl: string | null = null;
   errorMessage: string = '';
+  selectedProcessorType: string = 'GRAYSCALE_BORDER';
+
+  readonly processorTypes = [
+    { value: 'GRAYSCALE_BORDER', label: 'Grayscale with Border' },
+    { value: 'SEPIA', label: 'Sepia Tone' },
+    { value: 'BLUR', label: 'Blur Effect' }
+  ];
+
+  readonly ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+  readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
   private readonly destroy$ = new Subject<void>();
 
@@ -34,13 +46,22 @@ export class FileUploadComponent implements OnDestroy {
 
   /**
    * Handle file selection from input.
-   * Creates a preview of the selected image.
+   * Validates file type and size before creating preview.
    */
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
 
     if (file) {
+      const validationError = this.validateFile(file);
+      if (validationError) {
+        this.errorMessage = validationError;
+        this.selectedFile = null;
+        this.previewUrl = null;
+        input.value = ''; // Clear the input
+        return;
+      }
+
       this.selectedFile = file;
       this.errorMessage = '';
       this.uploadResponse = null;
@@ -61,7 +82,7 @@ export class FileUploadComponent implements OnDestroy {
     this.startUpload();
 
     this.fileUploadService
-      .uploadFile(this.selectedFile)
+      .uploadFile(this.selectedFile, this.selectedProcessorType)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => this.handleUploadSuccess(response),
@@ -87,6 +108,24 @@ export class FileUploadComponent implements OnDestroy {
     this.uploadResponse = null;
     this.previewUrl = null;
     this.errorMessage = '';
+    this.selectedProcessorType = 'GRAYSCALE_BORDER';
+  }
+
+  /**
+   * Validate file type and size.
+   * Returns error message if invalid, null if valid.
+   */
+  private validateFile(file: File): string | null {
+    if (!this.ALLOWED_FILE_TYPES.includes(file.type)) {
+      return `Invalid file type. Please upload an image file (PNG, JPEG, GIF, or WebP).`;
+    }
+
+    if (file.size > this.MAX_FILE_SIZE) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      return `File size (${sizeMB}MB) exceeds maximum allowed size of 10MB.`;
+    }
+
+    return null;
   }
 
   /**

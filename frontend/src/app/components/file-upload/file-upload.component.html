@@ -8,12 +8,25 @@
           type="file"
           id="fileInput"
           (change)="onFileSelected($event)"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
           [disabled]="isUploading">
         <label for="fileInput" class="file-input-label">
           <span class="upload-icon">📁</span>
           <span>{{ selectedFile ? selectedFile.name : 'Choose an image file' }}</span>
         </label>
+      </div>
+
+      <div class="processor-selector">
+        <label for="processorType" class="processor-label">Processing Effect:</label>
+        <select
+          id="processorType"
+          [(ngModel)]="selectedProcessorType"
+          [disabled]="isUploading"
+          class="processor-select">
+          <option *ngFor="let processor of processorTypes" [value]="processor.value">
+            {{ processor.label }}
+          </option>
+        </select>
       </div>
 
       <button
