@@ -2,6 +2,7 @@ package com.fileprocessor.controller;
 
 import com.fileprocessor.dto.FileUploadResponse;
 import com.fileprocessor.exception.InvalidFileException;
+import com.fileprocessor.processor.ProcessorType;
 import com.fileprocessor.service.IFileProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -34,20 +35,25 @@ public class FileUploadController {
      * Exceptions are handled by GlobalExceptionHandler.
      *
      * @param file the multipart file to be uploaded and processed
+     * @param processorType optional processor type (defaults to GRAYSCALE_BORDER)
      * @return ResponseEntity containing upload details
      */
     @PostMapping("/upload")
-    public ResponseEntity<FileUploadResponse> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<FileUploadResponse> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "processorType", required = false, defaultValue = "GRAYSCALE_BORDER")
+            ProcessorType processorType) {
+
         if (file.isEmpty()) {
-            throw new com.fileprocessor.exception.InvalidFileException("Please select a file to upload");
+            throw new InvalidFileException("Please select a file to upload");
         }
 
         long startTime = System.currentTimeMillis();
-        String outputFileName = fileProcessingService.processFile(file);
+        String outputFileName = fileProcessingService.processFile(file, processorType);
         long processingTime = System.currentTimeMillis() - startTime;
 
         FileUploadResponse response = FileUploadResponse.builder()
-                .message("File processed successfully")
+                .message("File processed successfully with " + processorType + " processor")
                 .originalFileName(file.getOriginalFilename())
                 .outputFileName(outputFileName)
                 .downloadUrl("/api/files/download/" + outputFileName)

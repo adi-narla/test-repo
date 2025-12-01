@@ -1,5 +1,6 @@
 package com.fileprocessor.service;
 
+import com.fileprocessor.processor.ProcessorType;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
@@ -11,12 +12,21 @@ import java.nio.file.Path;
 public interface IFileProcessingService {
 
     /**
-     * Process an uploaded file and generate output image.
+     * Process an uploaded file using default processor and generate output image.
      *
      * @param file the uploaded multipart file
      * @return the filename of the processed output
      */
     String processFile(MultipartFile file);
+
+    /**
+     * Process an uploaded file using specified processor type and generate output image.
+     *
+     * @param file the uploaded multipart file
+     * @param processorType the type of processor to use
+     * @return the filename of the processed output
+     */
+    String processFile(MultipartFile file, ProcessorType processorType);
 
     /**
      * Retrieve the path to a processed output file.

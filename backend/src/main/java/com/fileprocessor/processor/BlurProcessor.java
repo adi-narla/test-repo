@@ -4,16 +4,18 @@ import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ConvolveOp;
+import java.awt.image.Kernel;
 
 /**
- * Image processor that converts to grayscale and adds a border.
+ * Image processor that applies blur effect.
  * Implements Strategy pattern for image processing.
  */
-@Component("grayscaleBorderProcessor")
-public class GrayscaleBorderProcessor implements ImageProcessor {
+@Component("blurProcessor")
+public class BlurProcessor implements ImageProcessor {
 
-    private static final int BORDER_SIZE = 20;
-    private static final String WATERMARK_TEXT = "Processed";
+    private static final int BORDER_SIZE = 10;
+    private static final String WATERMARK_TEXT = "Blurred";
 
     @Override
     public BufferedImage process(BufferedImage original) {
@@ -25,8 +27,8 @@ public class GrayscaleBorderProcessor implements ImageProcessor {
 
         try {
             drawBorder(g2d, width, height);
-            BufferedImage grayscale = convertToGrayscale(original, width, height);
-            drawImage(g2d, grayscale);
+            BufferedImage blurred = applyBlur(original);
+            drawImage(g2d, blurred);
             addWatermark(g2d);
         } finally {
             g2d.dispose();
@@ -44,19 +46,22 @@ public class GrayscaleBorderProcessor implements ImageProcessor {
     }
 
     private void drawBorder(Graphics2D g2d, int width, int height) {
-        g2d.setColor(Color.DARK_GRAY);
+        g2d.setColor(new Color(70, 130, 180)); // Steel blue border
         g2d.fillRect(0, 0, width + 2 * BORDER_SIZE, height + 2 * BORDER_SIZE);
     }
 
-    private BufferedImage convertToGrayscale(BufferedImage original, int width, int height) {
-        BufferedImage grayscale = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
-        Graphics2D gGray = grayscale.createGraphics();
-        try {
-            gGray.drawImage(original, 0, 0, null);
-        } finally {
-            gGray.dispose();
-        }
-        return grayscale;
+    private BufferedImage applyBlur(BufferedImage original) {
+        // Create 3x3 blur kernel
+        float[] blurKernel = {
+                1/9f, 1/9f, 1/9f,
+                1/9f, 1/9f, 1/9f,
+                1/9f, 1/9f, 1/9f
+        };
+
+        Kernel kernel = new Kernel(3, 3, blurKernel);
+        ConvolveOp convolveOp = new ConvolveOp(kernel, ConvolveOp.EDGE_NO_OP, null);
+
+        return convolveOp.filter(original, null);
     }
 
     private void drawImage(Graphics2D g2d, BufferedImage image) {
@@ -65,7 +70,7 @@ public class GrayscaleBorderProcessor implements ImageProcessor {
 
     private void addWatermark(Graphics2D g2d) {
         g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 24));
-        g2d.drawString(WATERMARK_TEXT, BORDER_SIZE + 10, BORDER_SIZE + 30);
+        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+        g2d.drawString(WATERMARK_TEXT, BORDER_SIZE + 10, BORDER_SIZE + 25);
     }
 }

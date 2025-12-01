@@ -4,6 +4,8 @@ import com.fileprocessor.exception.FileProcessingException;
 import com.fileprocessor.exception.FileStorageException;
 import com.fileprocessor.exception.InvalidFileException;
 import com.fileprocessor.processor.ImageProcessor;
+import com.fileprocessor.processor.ImageProcessorFactory;
+import com.fileprocessor.processor.ProcessorType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +31,7 @@ import java.util.UUID;
 @Slf4j
 public class FileProcessingService implements IFileProcessingService {
 
-    private final ImageProcessor imageProcessor;
+    private final ImageProcessorFactory processorFactory;
 
     @Value("${upload.dir}")
     private String uploadDir;
@@ -39,6 +41,11 @@ public class FileProcessingService implements IFileProcessingService {
 
     @Override
     public String processFile(MultipartFile file) {
+        return processFile(file, ProcessorType.GRAYSCALE_BORDER);
+    }
+
+    @Override
+    public String processFile(MultipartFile file, ProcessorType processorType) {
         validateFile(file);
         ensureDirectoriesExist();
 
@@ -46,10 +53,14 @@ public class FileProcessingService implements IFileProcessingService {
         try {
             tempFilePath = saveTemporaryFile(file);
             BufferedImage inputImage = readImage(tempFilePath);
-            BufferedImage processedImage = imageProcessor.process(inputImage);
+
+            ImageProcessor processor = processorFactory.getProcessor(processorType);
+            BufferedImage processedImage = processor.process(inputImage);
+
             String outputFileName = saveProcessedImage(processedImage);
 
-            log.info("Successfully processed file: {} -> {}", file.getOriginalFilename(), outputFileName);
+            log.info("Successfully processed file: {} -> {} using {}",
+                    file.getOriginalFilename(), outputFileName, processorType);
             return outputFileName;
         } catch (IOException e) {
             log.error("Failed to process file: {}", file.getOriginalFilename(), e);
