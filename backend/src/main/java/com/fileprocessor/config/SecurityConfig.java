@@ -24,7 +24,7 @@ public class SecurityConfig {
 
     /**
      * Configure HTTP security with basic authentication.
-     * Public endpoints: health check
+     * Public endpoints: health check, Swagger UI, API docs
      * Protected endpoints: upload and download
      */
     @Bean
@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Disabled for simplicity (enable in production)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/files/health").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/files/upload").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/files/download/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
