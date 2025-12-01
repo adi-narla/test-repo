@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Backend
+backend/target
+backend/*.log
+backend/uploads
+
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/.angular
+frontend/*.log
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
